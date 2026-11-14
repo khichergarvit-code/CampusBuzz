@@ -5,7 +5,7 @@ checkLogin(true);
 $categories = ["Tech", "Cultural", "Sports", "Workshop"];
 $msg = "";
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] == 'POST')  {
     $title = trim($_POST['title']);
     $desc  = trim($_POST['description']);
     $cat   = $_POST['category'];
