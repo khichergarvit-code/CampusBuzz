@@ -1,20 +1,22 @@
 <?php
 require 'db.php';
-checkLogin(true);
+checkLogin(true); // Restrict access to admin only
 
 $categories = ["Tech", "Cultural", "Sports", "Workshop"];
-
 $id = (int)($_GET['event_id'] ?? $_POST['event_id'] ?? 0);
 $msg = "";
 
+// Fetch existing event details
 $stmt = $conn->prepare("SELECT * FROM events WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $ev = $stmt->get_result()->fetch_assoc();
 if (!$ev) { header("Location: admin.php"); exit; }
 
+// Count current registrations so max_seats isn't reduced below it
 $reg = (int)$conn->query("SELECT COUNT(*) c FROM registrations WHERE event_id = $id")->fetch_assoc()['c'];
 
+// Handle form submission to update event
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $ev['title']       = trim($_POST['title']);
     $ev['description'] = trim($_POST['description']);
@@ -25,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $ev['max_seats']   = (int)$_POST['max_seats'];
     $ev['image_url']   = trim($_POST['image_url']) ?: null;
 
+    // Validate inputs
     if (!$ev['title'] || !$ev['venue'] || !in_array($ev['category'], $categories)) {
         $msg = "Fill all required fields.";
     } elseif ($ev['max_seats'] < max(1, $reg)) {
@@ -32,9 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif ($ev['image_url'] && !preg_match('/^https?:\/\//', $ev['image_url'])) {
         $msg = "Invalid image URL.";
     } else {
+        // Update event record in database
         $stmt = $conn->prepare("UPDATE events SET title=?, description=?, category=?, venue=?, event_date=?, event_time=?, max_seats=?, image_url=? WHERE id=?");
         $stmt->bind_param("ssssssisi", $ev['title'], $ev['description'], $ev['category'], $ev['venue'], $ev['event_date'], $ev['event_time'], $ev['max_seats'], $ev['image_url'], $id);
         $stmt->execute();
+
         header("Location: admin.php?msg=Event+updated");
         exit;
     }
@@ -55,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="box wide">
         <h2>Edit Event</h2>
         <?php if ($msg) echo "<p class='msg err'>" . htmlspecialchars($msg) . "</p>"; ?>
+        <!-- Pre-filled form with current event data -->
         <form method="POST">
             <input type="hidden" name="event_id" value="<?= $id ?>">
             <input type="text" name="title" value="<?= htmlspecialchars($ev['title']) ?>" required>

@@ -1,11 +1,12 @@
 <?php
 require 'db.php';
-checkLogin(true);
+checkLogin(true); // Restrict access to admin only
 
 $categories = ["Tech", "Cultural", "Sports", "Workshop"];
 $msg = "";
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST')  {
+// Handle form submission to add a new event
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = trim($_POST['title']);
     $desc  = trim($_POST['description']);
     $cat   = $_POST['category'];
@@ -15,14 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')  {
     $seats = (int)$_POST['max_seats'];
     $img   = trim($_POST['image_url']) ?: null;
 
+    // Validate required inputs and image URL format
     if (!$title || !$venue || !$date || !$time || !in_array($cat, $categories) || $seats < 1) {
         $msg = "Please fill all required fields properly.";
     } elseif ($img && !preg_match('/^https?:\/\//', $img)) {
         $msg = "Image URL must start with http:// or https://";
     } else {
+        // Insert new event into database
         $stmt = $conn->prepare("INSERT INTO events (title, description, category, venue, event_date, event_time, max_seats, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("ssssssis", $title, $desc, $cat, $venue, $date, $time, $seats, $img);
         $stmt->execute();
+
+        // Redirect back to admin panel
         header("Location: admin.php?msg=Event+added");
         exit;
     }

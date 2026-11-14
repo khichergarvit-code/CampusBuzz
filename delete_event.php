@@ -1,13 +1,14 @@
 <?php
 require 'db.php';
-checkLogin(true);
+checkLogin(true); // Restrict access to admin only
 
+// Delete event by ID on POST request (registrations auto-delete via ON DELETE CASCADE)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt = $conn->prepare("DELETE FROM events WHERE id = ?");
     $stmt->bind_param("i", $_POST['event_id']);
     $stmt->execute();
-    
 }
+
 header("Location: admin.php?msg=Event+deleted");
 exit;
 ?>

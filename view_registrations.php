@@ -1,14 +1,17 @@
 <?php
 require 'db.php';
-checkLogin(true);
+checkLogin(true); // Restrict access to admin only
 
 $id = (int)($_GET['event_id'] ?? 0);
+
+// Fetch basic event info
 $stmt = $conn->prepare("SELECT title, event_date, max_seats FROM events WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $ev = $stmt->get_result()->fetch_assoc();
 if (!$ev) { header("Location: admin.php"); exit; }
 
+// Fetch list of registered students for this event
 $stmt = $conn->prepare("SELECT u.name, u.email, r.registered_at FROM registrations r JOIN users u ON r.user_id = u.id WHERE r.event_id = ? ORDER BY r.registered_at ASC");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -33,6 +36,7 @@ $students = $stmt->get_result();
         <?php if ($students->num_rows == 0): ?>
             <p>No registrations yet.</p>
         <?php else: ?>
+            <!-- Table listing all registered students -->
             <table>
                 <tr><th>#</th><th>Name</th><th>Email</th><th>Registered On</th></tr>
                 <?php $i = 1; while ($s = $students->fetch_assoc()): ?>

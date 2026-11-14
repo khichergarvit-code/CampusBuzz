@@ -1,7 +1,8 @@
 <?php
 require 'db.php';
-checkLogin();
+checkLogin(); // Ensure user is logged in
 
+// Fetch all events registered by the logged-in user
 $stmt = $conn->prepare("SELECT e.* FROM registrations r JOIN events e ON r.event_id = e.id WHERE r.user_id = ? ORDER BY e.event_date ASC");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
@@ -25,11 +26,13 @@ $today = date("Y-m-d");
 
     <div class="container">
         <h2>My Events (<?= $list->num_rows ?>)</h2>
+        <!-- Display status message (e.g., after cancelling) -->
         <?php if (isset($_GET['msg'])) echo "<p class='msg ok'>" . htmlspecialchars($_GET['msg']) . "</p>"; ?>
 
         <?php if ($list->num_rows == 0): ?>
             <p>No registrations yet. <a href="dashboard.php">Browse events</a></p>
         <?php else: ?>
+            <!-- Table of registered events -->
             <table>
                 <tr><th>Event</th><th>Category</th><th>Date & Time</th><th>Venue</th><th>Status</th><th>Action</th></tr>
                 <?php while ($e = $list->fetch_assoc()):
@@ -42,6 +45,7 @@ $today = date("Y-m-d");
                         <td><?= htmlspecialchars($e['venue']) ?></td>
                         <td><span class="badge <?= strtolower($status) ?>"><?= $status ?></span></td>
                         <td>
+                            <!-- Allow cancellation only if the event has not ended -->
                             <?php if ($status != "Completed"): ?>
                                 <form method="POST" action="cancel_registration.php" onsubmit="return confirm('Cancel registration?');">
                                     <input type="hidden" name="event_id" value="<?= $e['id'] ?>">

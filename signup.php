@@ -1,25 +1,31 @@
 <?php
-require 'db.php';
-$msg = "";
+require 'db.php'; // Include database connection
+$msg = ""; // Store validation error messages
 
+// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name  = trim($_POST['name']);
     $email = trim($_POST['email']);
     $pass  = $_POST['password'];
 
+    // Basic input validation
     if (!$name || !$email || strlen($pass) < 6) {
         $msg = "Fill all fields (password min 6 chars).";
     } else {
+        // Check if email is already registered
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         if ($stmt->get_result()->num_rows > 0) {
             $msg = "Email already exists.";
         } else {
+            // Hash password securely and insert new student record
             $hash = password_hash($pass, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $name, $email, $hash);
             $stmt->execute();
+
+            // Redirect to login page with success flag
             header("Location: login.php?registered=1");
             exit;
         }
@@ -35,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body class="center-page">
     <div class="box">
         <h2>Create Account</h2>
+        <!-- Display validation error -->
         <?php if ($msg) echo "<p class='msg err'>" . htmlspecialchars($msg) . "</p>"; ?>
         <form method="POST">
             <input type="text" name="name" placeholder="Full Name" required>
