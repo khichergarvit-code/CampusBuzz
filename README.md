@@ -41,32 +41,7 @@ Built as a lab project using **PHP, MySQL, JavaScript, AJAX, HTML and CSS**.
 | Backend | PHP | Login, sessions, form handling, database queries |
 | Database | MySQL | Storing users, events and registrations |
 
----
 
-## 🗄️ Database Design
-
-Three tables:
-
-- **users**: `id, name, email, password (hashed), role (student/admin), created_at`
-- **events**: `id, title, description, category, venue, event_date, event_time, max_seats, image_url, created_at`
-- **registrations**: `id, user_id → users.id, event_id → events.id, registered_at`
-
-`registrations` links students and events (a **many-to-many** relationship).
-A `UNIQUE (user_id, event_id)` rule stops duplicate registrations, and `ON DELETE CASCADE` removes registrations when an event is deleted.
-
-**Seats left** is calculated, not stored: `max_seats − number of registrations`.
-
----
-
-## 🔒 Security
-
-- **Password hashing** with `password_hash()` / `password_verify()`
-- **Prepared statements** on every query to prevent SQL injection
-- **Sessions** for login, with **role checks** on every admin page
-- Students can only cancel **their own** registrations (the query matches the logged-in user's id)
-- Indian Standard Time set in both PHP and MySQL, so date checks are always correct
-- **`htmlspecialchars()`** when displaying user input, to prevent script injection
-- Server-side validation on all forms
 
 ---
 
