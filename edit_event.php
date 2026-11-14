@@ -3,6 +3,7 @@ require 'db.php';
 checkLogin(true);
 
 $categories = ["Tech", "Cultural", "Sports", "Workshop"];
+
 $id = (int)($_GET['event_id'] ?? $_POST['event_id'] ?? 0);
 $msg = "";
 
