@@ -107,11 +107,7 @@ campus_events/
    - **MAMP:** `http://localhost:8888/campus_events`
    - **XAMPP:** `http://localhost/campus_events`
 
-### Already created the database before poster images were added?
-Run this once in phpMyAdmin's SQL tab:
-```sql
-ALTER TABLE events ADD image_url VARCHAR(500) DEFAULT NULL;
-```
+
 
 ### Making an admin account
 Sign up normally, then in phpMyAdmin open the `users` table, edit that user and change `role` to `admin`.
