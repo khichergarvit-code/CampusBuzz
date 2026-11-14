@@ -35,6 +35,7 @@ $events = $conn->query("SELECT e.*, COUNT(r.id) AS reg FROM events e LEFT JOIN r
         <div class="row">
             <h2>Manage Events</h2>
             <a href="add_event.php" class="btn">+ Add Event</a>
+            
         </div>
 
         <table>
