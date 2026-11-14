@@ -1,24 +1,11 @@
 <?php
-session_start();
 require 'db.php';
+checkLogin();
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-
-// Get every event this student registered for (JOIN to get the event details)
-$stmt = $conn->prepare(
-    "SELECT e.id, e.title, e.category, e.venue, e.event_date, e.event_time, r.registered_at
-     FROM registrations r
-     JOIN events e ON r.event_id = e.id
-     WHERE r.user_id = ?
-     ORDER BY e.event_date ASC"
-);
+$stmt = $conn->prepare("SELECT e.* FROM registrations r JOIN events e ON r.event_id = e.id WHERE r.user_id = ? ORDER BY e.event_date ASC");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
-$my_events = $stmt->get_result();
-
+$list = $stmt->get_result();
 $today = date("Y-m-d");
 ?>
 <!DOCTYPE html>
@@ -28,61 +15,44 @@ $today = date("Y-m-d");
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <nav class="navbar">
-        <span class="logo">🎓 CampusBuzz</span>
+    <nav class="nav">
+        <b>CampusBuzz</b>
         <div>
-            <a href="dashboard.php" class="nav-link">All Events</a>
-            <a href="logout.php" class="nav-link">Log Out</a>
+            <a href="dashboard.php">All Events</a>
+            <a href="logout.php">Logout</a>
         </div>
     </nav>
 
     <div class="container">
-        <h2>My Registered Events (<?php echo $my_events->num_rows; ?>)</h2>
+        <h2>My Events (<?= $list->num_rows ?>)</h2>
+        <?php if (isset($_GET['msg'])) echo "<p class='msg ok'>" . htmlspecialchars($_GET['msg']) . "</p>"; ?>
 
-        <?php if (isset($_GET['msg'])) { ?>
-            <p class="success-box"><?php echo htmlspecialchars($_GET['msg']); ?></p>
-        <?php } ?>
-
-        <?php if ($my_events->num_rows == 0) { ?>
-            <p>You haven't registered for any events yet. <a href="dashboard.php">Browse events →</a></p>
-        <?php } else { ?>
-            <table class="admin-table">
-                <tr>
-                    <th>Event</th>
-                    <th>Category</th>
-                    <th>Date &amp; Time</th>
-                    <th>Venue</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-                <?php while ($e = $my_events->fetch_assoc()) {
-                    if ($e['event_date'] < $today)       $status = "Completed";
-                    elseif ($e['event_date'] == $today)  $status = "Today";
-                    else                                 $status = "Upcoming";
+        <?php if ($list->num_rows == 0): ?>
+            <p>No registrations yet. <a href="dashboard.php">Browse events</a></p>
+        <?php else: ?>
+            <table>
+                <tr><th>Event</th><th>Category</th><th>Date & Time</th><th>Venue</th><th>Status</th><th>Action</th></tr>
+                <?php while ($e = $list->fetch_assoc()):
+                    $status = ($e['event_date'] < $today) ? "Completed" : (($e['event_date'] == $today) ? "Today" : "Upcoming");
                 ?>
                     <tr>
-                        <td><b><?php echo htmlspecialchars($e['title']); ?></b></td>
-                        <td><?php echo $e['category']; ?></td>
-                        <td><?php echo date("d M Y", strtotime($e['event_date'])); ?>,
-                            <?php echo date("h:i A", strtotime($e['event_time'])); ?></td>
-                        <td><?php echo htmlspecialchars($e['venue']); ?></td>
-                        <td><span class="badge <?php echo strtolower($status); ?>"><?php echo $status; ?></span></td>
+                        <td><?= htmlspecialchars($e['title']) ?></td>
+                        <td><?= $e['category'] ?></td>
+                        <td><?= date("d M Y", strtotime($e['event_date'])) ?>, <?= date("h:i A", strtotime($e['event_time'])) ?></td>
+                        <td><?= htmlspecialchars($e['venue']) ?></td>
+                        <td><span class="badge <?= strtolower($status) ?>"><?= $status ?></span></td>
                         <td>
-                            <?php if ($status != "Completed") { ?>
-                                <!-- Cancel uses POST + a confirm popup, like the admin Delete button -->
-                                <form method="POST" action="cancel_registration.php" class="inline-form"
-                                      onsubmit="return confirm('Cancel your registration for this event?');">
-                                    <input type="hidden" name="event_id" value="<?php echo $e['id']; ?>">
-                                    <button type="submit" class="small-btn danger">Cancel</button>
+                            <?php if ($status != "Completed"): ?>
+                                <form method="POST" action="cancel_registration.php" onsubmit="return confirm('Cancel registration?');">
+                                    <input type="hidden" name="event_id" value="<?= $e['id'] ?>">
+                                    <button type="submit" class="btn-sm danger">Cancel</button>
                                 </form>
-                            <?php } ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
-                <?php } ?>
+                <?php endwhile; ?>
             </table>
-        <?php } ?>
-        <p class="footer">CampusBuzz · Built with PHP, MySQL, JavaScript &amp; AJAX</p>
+        <?php endif; ?>
     </div>
 </body>
 </html>
